@@ -1,0 +1,93 @@
+# Specify the path to the ZIP file
+zip_file_path <- "C:/Users/wawer/Documents/DATA ANALYSIS MATERIAL/HAPPINESS/EMPLOYEE DATASET.zip"
+
+# Specify the name of the CSV file inside the ZIP archive
+csv_file_name <- "test.csv"
+
+# Extract the CSV file from the ZIP archive
+unzip(zip_file_path, files = csv_file_name)
+
+# Read the extracted CSV file into a dataframe
+employee_data <- read.csv(csv_file_name)
+
+# Check the first few rows of the dataframe
+head(employee_data)
+
+str(employee_data)
+
+#DATA CLEANING
+# Check for missing values
+any(is.na(employee_data))
+
+#Exploratory Data Analysis (EDA)
+#Distribution of Gender
+table(employee_data$Gender)
+
+#Distribution of Company Type
+table(employee_data$Company.Type)
+
+#Distribution of WFH Setup
+table(employee_data$WFH.Setup.Available)
+
+#Distribution of Designation
+table(employee_data$Designation)
+
+
+#Correlation between Variables
+cor(employee_data$Resource.Allocation, employee_data$Mental.Fatigue.Score)
+
+#DATA VISUALIZATION
+
+library(ggplot2)
+
+#Distribution of Mental Fatigue Scores by Designation
+ggplot(employee_data, aes(x = as.factor(Designation), y = Mental.Fatigue.Score)) +
+  geom_boxplot() +
+  labs(title = "Distribution of Mental Fatigue Scores by Designation")
+
+#Resource allocation male vs female
+ggplot(employee_data, aes(x = Gender, y = Resource.Allocation, fill = Gender)) +
+  geom_bar(stat = "summary", fun = "mean") +
+  labs(title = "Average Resource Allocation by Gender")
+
+#Employees in service vs in product
+ggplot(employee_data, aes(x = Company.Type, fill = Company.Type)) +
+  geom_bar() +
+  labs(title = "Count of Employees by Company Type")
+
+#Employees with WFH setup Mental Fatigue Scores
+ggplot(employee_data, aes(x = WFH.Setup.Available, y = Mental.Fatigue.Score, fill = WFH.Setup.Available)) +
+  geom_bar(stat = "summary", fun = "mean") +
+  labs(title = "Average Mental Fatigue Score by WFH Setup")
+
+
+# Assuming 'Employee.Turnover' is the target variable (1 for turnover, 0 for no turnover)
+model <- glm(employee_data$Turnover ~ Mental.Fatigue.Score + Resource.Allocation + WFH.Setup.Available + Gender + Designation, 
+             data = employee_data, family = binomial)
+
+# Model summary
+summary(model)
+
+# Make predictions on new data
+new_data <- data.frame(Mental.Fatigue.Score = c(5.5, 6.2), 
+                       Resource.Allocation = c(4, 3), 
+                       WFH.Setup.Available = c("Yes", "No"), 
+                       Gender = c("Male", "Female"), 
+                       Designation = c(2, 3))
+predicted_probs <- predict(model, newdata = new_data, type = "response")
+
+
+# Select relevant variables for clustering
+clustering_data <- employee_data[, c("Mental.Fatigue.Score", "Resource.Allocation")]
+
+# Scale the data
+scaled_data <- scale(clustering_data)
+
+# Perform k-means clustering (e.g., k=3 clusters)
+k <- 3
+kmeans_result <- kmeans(scaled_data, centers = k)
+
+# Explore cluster assignments
+cluster_assignments <- kmeans_result$cluster
+
+

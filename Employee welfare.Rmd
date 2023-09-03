@@ -15,47 +15,47 @@ head(employee_data)
 
 str(employee_data)
 
-#DATA CLEANING
+# DATA CLEANING
 # Check for missing values
 any(is.na(employee_data))
 
-#Exploratory Data Analysis (EDA)
-#Distribution of Gender
+# Exploratory Data Analysis (EDA)
+# Distribution of Gender
 table(employee_data$Gender)
 
-#Distribution of Company Type
+# Distribution of Company Type
 table(employee_data$Company.Type)
 
-#Distribution of WFH Setup
+# Distribution of WFH Setup
 table(employee_data$WFH.Setup.Available)
 
-#Distribution of Designation
+# Distribution of Designation
 table(employee_data$Designation)
 
 
-#Correlation between Variables
+# Correlation between Variables
 cor(employee_data$Resource.Allocation, employee_data$Mental.Fatigue.Score)
 
-#DATA VISUALIZATION
+# DATA VISUALIZATION
 
 library(ggplot2)
 
-#Distribution of Mental Fatigue Scores by Designation
+# Distribution of Mental Fatigue Scores by Designation
 ggplot(employee_data, aes(x = as.factor(Designation), y = Mental.Fatigue.Score)) +
   geom_boxplot() +
   labs(title = "Distribution of Mental Fatigue Scores by Designation")
 
-#Resource allocation male vs female
+# Resource allocation male vs female
 ggplot(employee_data, aes(x = Gender, y = Resource.Allocation, fill = Gender)) +
   geom_bar(stat = "summary", fun = "mean") +
   labs(title = "Average Resource Allocation by Gender")
 
-#Employees in service vs in product
+# Employees in service vs in product
 ggplot(employee_data, aes(x = Company.Type, fill = Company.Type)) +
   geom_bar() +
   labs(title = "Count of Employees by Company Type")
 
-#Employees with WFH setup Mental Fatigue Scores
+# Employees with WFH setup Mental Fatigue Scores
 ggplot(employee_data, aes(x = WFH.Setup.Available, y = Mental.Fatigue.Score, fill = WFH.Setup.Available)) +
   geom_bar(stat = "summary", fun = "mean") +
   labs(title = "Average Mental Fatigue Score by WFH Setup")

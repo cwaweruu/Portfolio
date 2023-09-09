@@ -1,0 +1,193 @@
+---
+title: "Credit Risk Analysis"
+author: "Cindy Waweru"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Import and view file
+ library(readxl)
+credit_risk_dataset <- read_excel("~/DATA ANALYSIS MATERIAL/credit_risk_dataset.xlsx")
+
+
+# Check the first few rows of the dataframe
+head(credit_risk_dataset)
+
+str(credit_risk_dataset)
+
+#DATA CLEANING
+# Check for missing values
+any(is.na(credit_risk_dataset))
+
+# Get rid of missing values
+clean_data <- na.omit(credit_risk_dataset)
+
+# Descriptive Analysis
+# Select the numeric variables to be summarized
+numeric_vars <- c(
+  "person_age", 
+  "person_income", 
+  "loan_amnt", 
+  "loan_int_rate", 
+  "loan_percent_income", 
+  "cb_person_cred_hist_length"
+)
+
+# Calculate summary statistics
+summary_stats <- summary(credit_risk_dataset[, numeric_vars])
+
+# Print the summary statistics
+print(summary_stats)
+
+
+# Data Visualization 
+library(ggplot2)
+
+# install.packages("ggplot2")  
+library(ggplot2)
+
+
+# Categorical variables to analyze
+categorical_vars <- c(
+  "person_home_ownership",
+  "loan_intent",
+  "loan_grade",
+  "cb_person_default_on_file"
+)
+
+# Loop through each categorical variable and create a frequency table
+for (var in categorical_vars) {
+  freq_table <- table(credit_risk_dataset[[var]])
+  
+# Print the frequency table
+  cat("\nFrequency Table for", var, ":\n")
+  print(freq_table)
+  
+  
+  # Calculate default rate by loan grade
+default_by_grade <- aggregate(credit_risk_dataset$loan_status, 
+                              by = list(credit_risk_dataset$loan_grade), 
+                              FUN = mean)
+
+# Rename columns for clarity
+colnames(default_by_grade) <- c("Loan_Grade", "Default_Rate")
+
+# Create a bar chart to visualize default rate by loan grade
+ggplot(data = default_by_grade, aes(x = Loan_Grade, y = Default_Rate)) +
+  geom_bar(stat = "identity", fill = "dodgerblue", color = "black") +
+  labs(title = "Default Rate by Loan Grade",
+       x = "Loan Grade",
+       y = "Default Rate") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+# Feature Importance 
+# Fit a linear model to predict loan_status based on loan_int_rate and person_income
+model <- lm(loan_status ~ loan_int_rate + person_income, data = credit_risk_dataset)
+
+# Calculate variable importance
+var_importance <- abs(coef(model))
+
+# Print variable importance
+cat("\nVariable Importance:\n")
+print(var_importance)
+
+
+# Customer Profiles (Simplified)
+# Compare characteristics of defaulters and non-defaulters
+
+default_profiles <- credit_risk_dataset[credit_risk_dataset$loan_status == 1, ]
+non_default_profiles <- credit_risk_dataset[credit_risk_dataset$loan_status == 0, ]
+
+# Summary statistics for defaulters and non-defaulters
+summary_default <- summary(default_profiles)
+summary_non_default <- summary(non_default_profiles)
+
+# Print summary statistics
+cat("\nSummary Statistics for Defaulters:\n")
+print(summary_default)
+
+cat("\nSummary Statistics for Non-Defaulters:\n")
+print(summary_non_default)
+
+
+# Create bins for employment length categories
+clean_data$employment_length_category <- cut(clean_data$person_emp_length,
+                                            breaks = c(0, 1, 2, 3, 4, 5, Inf),
+                                            labels = c("0-1", "1-2", "2-3", "3-4", "4-5", "5+"))
+
+# Calculate default rates by employment length category
+default_rate_by_employment <- aggregate(clean_data$loan_status,
+                                       by = list(clean_data$employment_length_category),
+                                       FUN = mean)
+
+# Rename columns for clarity
+colnames(default_rate_by_employment) <- c("Employment_Length_Category", "Default_Rate")
+
+# Create a bar chart to visualize default rates by employment length
+library(ggplot2)
+ggplot(data = default_rate_by_employment, aes(x = Employment_Length_Category, y = Default_Rate, fill = Employment_Length_Category)) +
+  geom_bar(stat = "identity") +
+  labs(title = "Default Rate by Employment Length",
+       x = "Employment Length",
+       y = "Default Rate") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+  
+
+# Calculate default rates by home ownership category
+default_rate_by_home_ownership <- aggregate(clean_data$loan_status,
+                                            by = list(clean_data$person_home_ownership),
+                                            FUN = mean)
+
+# Rename columns for clarity
+colnames(default_rate_by_home_ownership) <- c("Home_Ownership_Category", "Default_Rate")
+
+# Create a bar chart to visualize default rates by home ownership
+ggplot(data = default_rate_by_home_ownership, aes(x = Home_Ownership_Category, y = Default_Rate, fill = Home_Ownership_Category)) +
+  geom_bar(stat = "identity") +
+  labs(title = "Default Rate by Home Ownership",
+       x = "Home Ownership",
+       y = "Default Rate") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+
+# Create age groups for analysis (excluding older age groups)
+age_groups <- cut(clean_data$person_age, breaks = c(20, 30, 40, 50, 60, Inf), labels = c("20-30", "30-40", "40-50", "50-60", "60+"))
+
+# Calculate default rates by age group
+default_rate_by_age <- aggregate(clean_data$loan_status, by = list(age_groups), FUN = mean)
+
+# Rename columns for clarity
+colnames(default_rate_by_age) <- c("Age_Group", "Default_Rate")
+
+# Create a bar chart to visualize default rates by age group
+ggplot(data = default_rate_by_age, aes(x = Age_Group, y = Default_Rate, fill = Age_Group)) +
+  geom_bar(stat = "identity") +
+  labs(title = "Default Rate by Age Group",
+       x = "Age Group",
+       y = "Default Rate") +
+  theme_minimal()
+
+
+# Create income quartiles for analysis
+income_quartiles <- cut(clean_data$person_income, quantile(clean_data$person_income, probs = c(0, 0.25, 0.5, 0.75, 1)), labels = c("Q1", "Q2", "Q3", "Q4"))
+
+# Calculate default rates by income quartile
+default_rate_by_income <- aggregate(clean_data$loan_status, by = list(income_quartiles), FUN = mean)
+
+# Rename columns for clarity
+colnames(default_rate_by_income) <- c("Income_Quartile", "Default_Rate")
+
+# Create a bar chart to visualize default rates by income quartile
+ggplot(data = default_rate_by_income, aes(x = Income_Quartile, y = Default_Rate, fill = Income_Quartile)) +
+  geom_bar(stat = "identity") +
+  labs(title = "Default Rate by Income Quartile",
+       x = "Income Quartile",
+       y = "Default Rate") +
+  theme_minimal()
+
